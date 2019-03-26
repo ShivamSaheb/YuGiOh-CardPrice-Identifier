@@ -2,12 +2,12 @@
 % CARD PRICE IDENTIFIER - American
 %%
 
+
 function [] = CPIdentifier()
-    clear all
-    clc
     cardList = readtable("card_list.csv");
 
     cardTable = getTable(cardList);
+        
 end
 
 function [url, cardId, rarity] = getTable(cardList)
@@ -21,7 +21,7 @@ function [url, cardId, rarity] = getTable(cardList)
         cardId = string(row.CardID(1));
         rarity = string(row.CardRarity(1));
         quantity = row.Quantity(1);
-        
+                   
         [title, p] = getDetails(url);  
         
         cardList.CurrentPricePerCard(i,1) = p;
@@ -35,7 +35,7 @@ function [url, cardId, rarity] = getTable(cardList)
 
     end
     
-    writetable(cardList, 'card_list_currents.xlsx');
+    writetable(cardList, 'card_list_currents.csv');
 end
 
 function [isValid] = validateDetails(title, expectedCardId, expectedRarity)
@@ -48,15 +48,13 @@ function [isValid] = validateDetails(title, expectedCardId, expectedRarity)
     isValid = contains(actualCardId, expectedCardId) && contains(actualRarity, expectedRarity);
 end
 
-
 function [title, p] = getDetails(url)
     tree = getHtmlTree(url);
     title = getTitle(tree);
-    pri = getPrice(tree);
+    pri = getPrice(tree, url);
     priSplit = strsplit(pri, '$');
-    priSplit(1) = [];
-    p = str2num(priSplit);
-    
+    priSplit = priSplit{2};
+    p = str2double(priSplit);
 end
 
 function [pageTree] = getHtmlTree(url)
@@ -67,15 +65,25 @@ function [pageTree] = getHtmlTree(url)
     pageTree = htmlTree(code);
 end
 
-function [price] = getPrice(tree)
-    % Select Present Price from class = "priceSection" in HTML tree
-    selector = "SPAN.priceSection";
-    priceSection = findElement(tree, selector);
-    price = extractHTMLText(priceSection);
+function [price] = getPrice(tree, url)
+    
+    % for the beta version of the website
+%     if  contains(url, "beta")
+        selector = "DIV.price";
+        priceSection = findElement(tree, selector);
+        price = extractHTMLText(priceSection);
+        price = price{2};
+        
+%     % for the old version    
+%     else
+%         selector = "SPAN.priceSection";
+%         priceSection = findElement(tree, selector);
+%         price = extractHTMLText(priceSection);
+%     end  
 end
 
 function [name] = getTitle(tree)
-    selector = "H1.product_name";
+    selector = "DIV.itemHeader";
     nameSection = findElement(tree, selector);
     name = extractHTMLText(nameSection);
 end
