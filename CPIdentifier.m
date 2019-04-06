@@ -3,7 +3,7 @@
 %%
 
 function [] = CPIdentifier()
-    cardList = readtable("card_list.csv");
+    cardList = readtable("card_list_currents.csv");
 
     cardTable = getTable(cardList);
         
@@ -13,6 +13,9 @@ function [title, cardId, rarity] = getTable(cardList)
     
     [rows] = height(cardList);
     
+    formatOut = 'mmmm_dd_yyyy_HH_MM_SS';
+    identifier = datestr(now, formatOut);
+       
     for i=1:rows
         row = cardList(i,:);
         
@@ -21,10 +24,10 @@ function [title, cardId, rarity] = getTable(cardList)
         rarity = string(row.CardRarity(1));
         quantity = row.Quantity(1);
                    
-        [title, p] = getDetails(url);  
+        [title, price] = getDetails(url);  
         
-        cardList.CurrentPricePerCard(i,1) = p;
-        cardList.CurrentTotalPrice(i,1) = quantity*p;
+        cardList(i, ("PPC_" + identifier)) = cellstr(num2str(price));
+        cardList(i, ("TPC_" + identifier)) = cellstr(num2str(quantity * price));
     end
     
     writetable(cardList, 'card_list_currents.csv');
@@ -40,13 +43,11 @@ end
 %     isValid = contains(actualCardId, expectedCardId) && contains(actualRarity, expectedRarity);
 % end
 
-function [name, p] = getDetails(url)
+function [name, price] = getDetails(url)
     tree = getHtmlTree(url);
     name = getName(tree);
-    pri = getPrice(tree);
-    priSplit = strsplit(pri, '$');
-    priSplit = priSplit{2};
-    p = str2double(priSplit);
+    
+    price = getPrice(tree);
 end
 
 function [pageTree] = getHtmlTree(url)
@@ -54,11 +55,14 @@ function [pageTree] = getHtmlTree(url)
     pageTree = htmlTree(code);
 end
 
-function [price] = getPrice(tree)
-        selector = "DIV.price";
-        priceSection = findElement(tree, selector);
-        price = extractHTMLText(priceSection);
-        price = price{2}; 
+function [p] = getPrice(tree)
+    selector = "DIV.price";
+    priceSection = findElement(tree, selector);
+    p = extractHTMLText(priceSection);
+    
+    p = extractAfter(p{1}, "$");
+    
+    p = str2num(p);
 end
 
 function [name] = getName(tree)
