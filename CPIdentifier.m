@@ -46,7 +46,6 @@ end
 function [name, price] = getDetails(url)
     tree = getHtmlTree(url);
     name = getName(tree);
-    
     price = getPrice(tree);
 end
 
