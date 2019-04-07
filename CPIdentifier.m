@@ -4,7 +4,7 @@
 
 function [] = CPIdentifier()
     cardList = readtable("card_list_currents.csv");
-
+    
     cardTable = getTable(cardList);
         
 end
@@ -60,7 +60,6 @@ function [p] = getPrice(tree)
     p = extractHTMLText(priceSection);
     
     p = extractAfter(p{1}, "$");
-    
     p = str2num(p);
 end
 
